@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>✈️ 飞机大战 - 永久道具版</title>
+    <title>✈️ 飞机大战 - 终极版</title>
     <style>
         * {
             margin: 0;
@@ -64,12 +64,15 @@
 
         .powerup-legend {
             margin-top: 10px;
-            font-size: 12px;
+            font-size: 11px;
             color: #888;
+            max-width: 450px;
+            text-align: center;
+            line-height: 1.6;
         }
 
         .powerup-legend span {
-            margin: 0 10px;
+            margin: 0 5px;
         }
 
         #gameOver {
@@ -124,19 +127,29 @@
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 10px;
+            gap: 8px;
             flex-wrap: wrap;
             justify-content: center;
-            max-width: 400px;
+            max-width: 420px;
         }
 
         .powerup-badge {
-            padding: 5px 12px;
-            border-radius: 15px;
-            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
             color: #fff;
-            text-shadow: 0 0 5px rgba(0,0,0,0.5);
+            text-shadow: 0 0 3px rgba(0,0,0,0.5);
             animation: pulse-badge 1s infinite;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .powerup-badge .level {
+            background: rgba(0,0,0,0.3);
+            padding: 1px 5px;
+            border-radius: 8px;
+            font-weight: bold;
         }
 
         @keyframes pulse-badge {
@@ -146,7 +159,7 @@
     </style>
 </head>
 <body>
-    <h1>✈️ 飞机大战 - 永久道具版</h1>
+    <h1>✈️ 飞机大战 - 终极版</h1>
     <div class="game-info">
         分数: <span id="score">0</span> | 生命: <span id="lives">3</span> | 连击: <span id="combo">0</span>
     </div>
@@ -156,12 +169,15 @@
         <span>← →</span> 移动 | <span>空格</span> 发射 | <span>P</span> 暂停 | <span>Shift</span> 加速
     </div>
     <div class="powerup-legend">
-        <span style="color:#ff6b6b">🔴 红色: 射速提升</span>
-        <span style="color:#4a90d9">🔵 蓝色: 自动射击</span>
-        <span style="color:#9b59b6">🟣 紫色: 子弹分裂</span>
-        <span style="color:#2ecc71">🟢 绿色: 护盾</span>
-        <span style="color:#f1c40f">🟡 黄色: 范围攻击</span>
-        <span style="color:#e74c3c">❤️ 红心: 生命恢复</span>
+        <span style="color:#ff6b6b">🔴 射速</span>
+        <span style="color:#4a90d9">🔵 自动</span>
+        <span style="color:#9b59b6">🟣 分裂</span>
+        <span style="color:#2ecc71">🟢 护盾</span>
+        <span style="color:#f1c40f">🟡 范围</span>
+        <span style="color:#e74c3c">❤️ 生命</span>
+        <span style="color:#00d4ff">💎 穿透</span>
+        <span style="color:#ff69b4">💗 追踪</span>
+        <span style="color:#00ff88">✨ 无敌</span>
     </div>
 
     <div id="gameOver">
@@ -202,16 +218,21 @@
             height: 60,
             speed: 7,
             color: '#4a90d9',
-            glowColor: '#87ceeb'
+            glowColor: '#87ceeb',
+            invincible: false,
+            invincibleTimer: 0
         };
 
-        // 道具状态 - 永久生效
+        // 道具状态 - 可叠加
         const powerups = {
-            rapidFire: { active: false, color: '#ff6b6b', name: '射速提升' },
-            autoFire: { active: false, color: '#4a90d9', name: '自动射击' },
-            splitShot: { active: false, color: '#9b59b6', name: '子弹分裂' },
-            shield: { active: false, color: '#2ecc71', name: '护盾' },
-            spreadShot: { active: false, color: '#f1c40f', name: '范围攻击' }
+            rapidFire: { level: 0, maxLevel: 5, color: '#ff6b6b', name: '射速' },
+            autoFire: { level: 0, maxLevel: 3, color: '#4a90d9', name: '自动' },
+            splitShot: { level: 0, maxLevel: 4, color: '#9b59b6', name: '分裂' },
+            shield: { level: 0, maxLevel: 5, color: '#2ecc71', name: '护盾' },
+            spreadShot: { level: 0, maxLevel: 3, color: '#f1c40f', name: '范围' },
+            piercing: { level: 0, maxLevel: 3, color: '#00d4ff', name: '穿透' },
+            homing: { level: 0, maxLevel: 3, color: '#ff69b4', name: '追踪' },
+            invincible: { level: 0, maxLevel: 1, color: '#00ff88', name: '无敌' }
         };
 
         // 子弹数组
@@ -250,6 +271,9 @@
             { type: 'splitShot', color: '#9b59b6', symbol: '✦', name: '分裂' },
             { type: 'shield', color: '#2ecc71', symbol: '🛡️', name: '护盾' },
             { type: 'spreadShot', color: '#f1c40f', symbol: '💥', name: '范围' },
+            { type: 'piercing', color: '#00d4ff', symbol: '💎', name: '穿透' },
+            { type: 'homing', color: '#ff69b4', symbol: '💗', name: '追踪' },
+            { type: 'invincible', color: '#00ff88', symbol: '✨', name: '无敌' },
             { type: 'life', color: '#e74c3c', symbol: '❤️', name: '生命' }
         ];
 
@@ -280,6 +304,12 @@
         // 绘制玩家飞机
         function drawPlayer() {
             ctx.save();
+
+            // 无敌闪烁效果
+            if (player.invincible) {
+                ctx.globalAlpha = 0.5 + Math.sin(Date.now() / 50) * 0.5;
+            }
+
             ctx.shadowColor = player.glowColor;
             ctx.shadowBlur = 20;
 
@@ -328,15 +358,18 @@
                 ctx.fill();
             }
 
-            // 护盾效果
-            if (powerups.shield.active) {
-                ctx.strokeStyle = '#2ecc71';
-                ctx.lineWidth = 3;
-                ctx.shadowColor = '#2ecc71';
-                ctx.shadowBlur = 15;
-                ctx.beginPath();
-                ctx.arc(player.x + player.width / 2, player.y + player.height / 2, player.width, 0, Math.PI * 2);
-                ctx.stroke();
+            // 护盾效果（多层）
+            if (powerups.shield.level > 0) {
+                for (let i = 0; i < powerups.shield.level; i++) {
+                    ctx.strokeStyle = '#2ecc71';
+                    ctx.lineWidth = 2;
+                    ctx.shadowColor = '#2ecc71';
+                    ctx.shadowBlur = 10;
+                    ctx.globalAlpha = 0.8 - i * 0.15;
+                    ctx.beginPath();
+                    ctx.arc(player.x + player.width / 2, player.y + player.height / 2, player.width + i * 8, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
             }
 
             ctx.restore();
@@ -484,37 +517,28 @@
 
         // 发射子弹
         function shoot() {
-            const baseColor = powerups.splitShot.active ? '#9b59b6' : '#ffff00';
+            const baseColor = powerups.splitShot.level > 0 ? '#9b59b6' : '#ffff00';
+            const bulletCount = 1 + powerups.splitShot.level; // 分裂等级决定子弹数量
 
-            if (powerups.splitShot.active) {
-                // 分裂弹：三发
+            for (let i = 0; i < bulletCount; i++) {
+                const offset = (i - (bulletCount - 1) / 2) * 5;
                 bullets.push({
-                    x: player.x + player.width / 2 - 2,
+                    x: player.x + player.width / 2 - 2 + offset,
                     y: player.y,
                     width: 4,
                     height: 15,
                     color: baseColor,
-                    vx: 0
+                    vx: offset * 0.3,
+                    piercing: powerups.piercing.level > 0,
+                    homing: powerups.homing.level > 0
                 });
-                bullets.push({
-                    x: player.x + player.width / 2 - 2,
-                    y: player.y,
-                    width: 4,
-                    height: 15,
-                    color: baseColor,
-                    vx: -3
-                });
-                bullets.push({
-                    x: player.x + player.width / 2 - 2,
-                    y: player.y,
-                    width: 4,
-                    height: 15,
-                    color: baseColor,
-                    vx: 3
-                });
-            } else if (powerups.spreadShot.active) {
-                // 范围攻击：五发扇形
-                for (let i = -2; i <= 2; i++) {
+            }
+
+            // 范围攻击
+            if (powerups.spreadShot.level > 0) {
+                const spreadCount = powerups.spreadShot.level * 2;
+                for (let i = -spreadCount; i <= spreadCount; i++) {
+                    if (i === 0) continue;
                     bullets.push({
                         x: player.x + player.width / 2 - 2,
                         y: player.y,
@@ -522,18 +546,10 @@
                         height: 15,
                         color: '#f1c40f',
                         vx: i * 2,
-                        vy: -10 + Math.abs(i) * 2
+                        vy: -10 + Math.abs(i) * 2,
+                        piercing: powerups.piercing.level > 0
                     });
                 }
-            } else {
-                bullets.push({
-                    x: player.x + player.width / 2 - 2,
-                    y: player.y,
-                    width: 4,
-                    height: 15,
-                    color: baseColor,
-                    vx: 0
-                });
             }
         }
 
@@ -569,14 +585,19 @@
             }
         }
 
-        // 激活道具效果（永久生效）
+        // 激活道具效果（可叠加）
         function activatePowerup(type) {
             if (type === 'life') {
                 lives = Math.min(lives + 1, 5);
                 livesEl.textContent = lives;
-            } else {
-                powerups[type].active = true;
-                powerupsCollected++;
+            } else if (type === 'invincible') {
+                player.invincible = true;
+                player.invincibleTimer = 300; // 5秒无敌
+            } else if (powerups[type]) {
+                if (powerups[type].level < powerups[type].maxLevel) {
+                    powerups[type].level++;
+                    powerupsCollected++;
+                }
             }
             updatePowerupDisplay();
         }
@@ -585,13 +606,20 @@
         function updatePowerupDisplay() {
             activePowerupsEl.innerHTML = '';
             for (let key in powerups) {
-                if (powerups[key].active) {
+                if (powerups[key].level > 0) {
                     const badge = document.createElement('div');
                     badge.className = 'powerup-badge';
                     badge.style.backgroundColor = powerups[key].color;
-                    badge.textContent = powerups[key].name;
+                    badge.innerHTML = `${powerups[key].name}<span class="level">Lv.${powerups[key].level}</span>`;
                     activePowerupsEl.appendChild(badge);
                 }
+            }
+            if (player.invincible) {
+                const badge = document.createElement('div');
+                badge.className = 'powerup-badge';
+                badge.style.backgroundColor = '#00ff88';
+                badge.innerHTML = `无敌<span class="level">${Math.ceil(player.invincibleTimer / 60)}s</span>`;
+                activePowerupsEl.appendChild(badge);
             }
         }
 
@@ -608,8 +636,28 @@
                 player.x += player.speed * speedBoost;
             }
 
+            // 更新无敌状态
+            if (player.invincible) {
+                player.invincibleTimer--;
+                if (player.invincibleTimer <= 0) {
+                    player.invincible = false;
+                }
+            }
+
             // 更新子弹
             bullets = bullets.filter(bullet => {
+                // 追踪子弹
+                if (bullet.homing && enemies.length > 0) {
+                    const target = enemies[0];
+                    const dx = target.x + target.width / 2 - bullet.x;
+                    const dy = target.y + target.height / 2 - bullet.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist > 0) {
+                        bullet.vx += (dx / dist) * 0.5;
+                        bullet.vy += (dy / dist) * 0.5;
+                    }
+                }
+
                 bullet.y += bullet.vy || -12;
                 bullet.x += bullet.vx || 0;
                 return bullet.y > -20 && bullet.x > -20 && bullet.x < canvas.width + 20;
@@ -652,7 +700,7 @@
                     }
                     return true;
                 });
-                return !hit;
+                return !hit || bullet.piercing;
             });
 
             // 碰撞检测：玩家吃到道具
@@ -674,8 +722,11 @@
                     enemy.x + enemy.width > player.x &&
                     enemy.y < player.y + player.height &&
                     enemy.y + enemy.height > player.y) {
-                    if (powerups.shield.active) {
-                        // 护盾抵消伤害
+                    if (player.invincible || powerups.shield.level > 0) {
+                        if (powerups.shield.level > 0) {
+                            powerups.shield.level--;
+                            updatePowerupDisplay();
+                        }
                         createExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, '#2ecc71', 15);
                         return false;
                     }
@@ -726,9 +777,10 @@
             dropItems = [];
             particles = [];
             player.x = canvas.width / 2 - 25;
+            player.invincible = false;
 
             for (let key in powerups) {
-                powerups[key].active = false;
+                powerups[key].level = 0;
             }
 
             scoreEl.textContent = score;
@@ -759,8 +811,8 @@
             }
 
             // 自动射击
-            const shootInterval = powerups.rapidFire.active ? 80 : 150;
-            const shouldAutoFire = powerups.autoFire.active || keys[' '];
+            const shootInterval = Math.max(50, 150 - powerups.rapidFire.level * 20);
+            const shouldAutoFire = powerups.autoFire.level > 0 || keys[' '];
 
             if (shouldAutoFire && timestamp - lastShot > shootInterval) {
                 shoot();
