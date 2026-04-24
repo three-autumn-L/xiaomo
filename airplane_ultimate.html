@@ -288,16 +288,8 @@
         let bullets = [], enemies = [], particles = [], stars = [], enemyBullets = [], dropItems = [];
         const keys = {};
 
-        // 掉落道具类型
+        // 掉落道具类型 - 只保留回血
         const dropTypes = [
-            { type: 'rapidFire', color: '#ff6b6b', symbol: '⚡', name: '射速' },
-            { type: 'autoFire', color: '#4a90d9', symbol: '🎯', name: '自动' },
-            { type: 'splitShot', color: '#9b59b6', symbol: '✦', name: '分裂' },
-            { type: 'shield', color: '#2ecc71', symbol: '🛡️', name: '护盾' },
-            { type: 'spreadShot', color: '#f1c40f', symbol: '💥', name: '范围' },
-            { type: 'piercing', color: '#00d4ff', symbol: '💎', name: '穿透' },
-            { type: 'homing', color: '#ff69b4', symbol: '💗', name: '追踪' },
-            { type: 'invincible', color: '#00ff88', symbol: '✨', name: '无敌' },
             { type: 'heal', color: '#ff4444', symbol: '❤️', name: '回血' }
         ];
 
@@ -559,8 +551,8 @@
         }
 
         function spawnDropItem(x, y) {
-            if (Math.random() < 0.15) {
-                const typeData = dropTypes[Math.floor(Math.random() * dropTypes.length)];
+            if (Math.random() < 0.2) {
+                const typeData = dropTypes[0];
                 dropItems.push({
                     x: x, y: y,
                     size: 30,
@@ -776,16 +768,8 @@
         }
 
         function activatePowerup(type) {
-            switch(type) {
-                case 'rapidFire': player.attackSpeed += 0.3; break;
-                case 'autoFire': player.autoFire = true; break;
-                case 'splitShot': player.splitShot = true; break;
-                case 'shield': player.defense += 0.5; break;
-                case 'spreadShot': player.spreadShot = true; break;
-                case 'piercing': player.piercing = true; break;
-                case 'homing': player.homing = true; break;
-                case 'invincible': player.invincible = true; player.invincibleTimer = 180; break;
-                case 'heal': player.hp = Math.min(player.hp + 5, player.maxHp); break;
+            if (type === 'heal') {
+                player.hp = Math.min(player.hp + 5, player.maxHp);
             }
         }
 
