@@ -251,8 +251,8 @@
 
         const player = {
             x: canvas.width / 2 - 25, y: canvas.height - 90, width: 50, height: 60,
-            speed: 3, damage: 1, attackSpeed: 1, defense: 1,
-            level: 1, exp: 0, expNeeded: 100, hp: 30, maxHp: 30,
+            speed: 2, damage: 1, attackSpeed: 1, defense: 1,
+            level: 1, exp: 0, expNeeded: 100, hp: 10, maxHp: 10,
             ultCharge: 0, ultMax: 100, ultReady: false,
             invincible: false, invincibleTimer: 0
         };
@@ -722,9 +722,9 @@
             score = 0; wave = 1; enemiesThisWave = 10; enemiesKilledThisWave = 0;
             isBossWave = false; bossSpawned = false;
             player.x = canvas.width / 2 - 25;
-            player.speed = 3; player.damage = 1; player.attackSpeed = 1; player.defense = 1;
+            player.speed = 2; player.damage = 1; player.attackSpeed = 1; player.defense = 1;
             player.level = 1; player.exp = 0; player.expNeeded = 100;
-            player.hp = 30; player.maxHp = 30; player.ultCharge = 0; player.ultReady = false;
+            player.hp = 10; player.maxHp = 10; player.ultCharge = 0; player.ultReady = false;
             player.invincible = false; player.invincibleTimer = 0;
             player.multiShot = 0; player.piercing = false; player.splitShot = false;
             affixes.length = 0; for (let k in affixLevels) delete affixLevels[k];
