@@ -189,7 +189,7 @@
             <div class="game-info">
                 <div>关卡: <span id="wave">1</span></div>
                 <div>分数: <span id="score">0</span></div>
-                <div>生命: <span id="lives">3</span></div>
+                <div>血量: <span id="hp">30</span>/<span id="maxHp">30</span></div>
                 <div>等级: <span id="level">1</span></div>
                 <div>经验: <span id="exp">0</span>/<span id="expNeeded">100</span></div>
                 <div class="exp-bar-container"><div class="exp-bar-fill" id="expBar" style="width: 0%"></div></div>
@@ -198,7 +198,7 @@
             </div>
             <canvas id="gameCanvas" width="450" height="650"></canvas>
             <div class="controls">
-                <span>← →</span> 移动 | <span>空格</span> 发射 | <span>Z</span> 大招 | <span>P</span> 暂停 | <span>Shift</span> 加速
+                <span>← ↑ ↓ →</span> 移动 | <span>空格</span> 发射 | <span>Z</span> 大招 | <span>P</span> 暂停 | <span>Shift</span> 加速
             </div>
         </div>
 
@@ -251,8 +251,8 @@
 
         const player = {
             x: canvas.width / 2 - 25, y: canvas.height - 90, width: 50, height: 60,
-            speed: 1, damage: 1, attackSpeed: 1, defense: 1,
-            level: 1, exp: 0, expNeeded: 100, lives: 3, maxLives: 3,
+            speed: 3, damage: 1, attackSpeed: 1, defense: 1,
+            level: 1, exp: 0, expNeeded: 100, hp: 30, maxHp: 30,
             ultCharge: 0, ultMax: 100, ultReady: false
         };
 
@@ -264,7 +264,7 @@
             { name: '攻击强化', desc: '攻击力 +0.2', rarity: 'common', effect: (p) => p.damage += 0.2 },
             { name: '快速射击', desc: '攻击速度 +0.2', rarity: 'common', effect: (p) => p.attackSpeed += 0.2 },
             { name: '坚固护甲', desc: '防御力 +0.2', rarity: 'common', effect: (p) => p.defense += 0.2 },
-            { name: '生命提升', desc: '最大生命 +1', rarity: 'common', effect: (p) => { p.maxLives += 1; p.lives += 1; } },
+            { name: '生命提升', desc: '最大血量 +10', rarity: 'common', effect: (p) => { p.maxHp += 10; p.hp += 10; } },
             { name: '疾风步', desc: '移动速度 +0.5', rarity: 'rare', effect: (p) => p.speed += 0.5 },
             { name: '致命打击', desc: '攻击力 +0.5', rarity: 'rare', effect: (p) => p.damage += 0.5 },
             { name: '连射', desc: '攻击速度 +0.5', rarity: 'rare', effect: (p) => p.attackSpeed += 0.5 },
@@ -282,7 +282,7 @@
             { name: '分裂', desc: '子弹分裂成3发', rarity: 'legendary', effect: (p) => p.splitShot = true },
         ];
 
-        let bullets = [], enemies = [], particles = [], stars = [];
+        let bullets = [], enemies = [], particles = [], stars = [], enemyBullets = [];
         const keys = {};
 
         for (let i = 0; i < 100; i++) {
@@ -390,6 +390,22 @@
             }
         }
 
+        function enemyShoot(enemy) {
+            const bulletCount = enemy.isBoss ? 5 : enemy.isElite ? 3 : 1;
+            for (let i = 0; i < bulletCount; i++) {
+                const offset = (i - (bulletCount - 1) / 2) * 15;
+                enemyBullets.push({
+                    x: enemy.x + enemy.width / 2 - 3 + offset,
+                    y: enemy.y + enemy.height,
+                    width: 6, height: 12,
+                    color: '#ff6b6b',
+                    vx: offset * 0.1,
+                    vy: enemy.isBoss ? 4 : enemy.isElite ? 5 : 6,
+                    damage: enemy.damage
+                });
+            }
+        }
+
         function useUlt() {
             if (player.ultCharge >= player.ultMax) {
                 enemies.forEach(enemy => {
@@ -409,20 +425,49 @@
 
             if (isBoss) {
                 bossSpawned = true;
+                const bossTypes = [
+                    { color: '#ff0000', name: 'Red Boss' },
+                    { color: '#9b59b6', name: 'Purple Boss' },
+                    { color: '#00d4ff', name: 'Cyan Boss' },
+                    { color: '#00ff88', name: 'Green Boss' }
+                ];
+                const bossType = bossTypes[Math.floor(Math.random() * bossTypes.length)];
                 enemies.push({
                     x: canvas.width / 2 - 60, y: -100, width: 120, height: 100,
-                    speed: 1, color: '#ff0000', isBoss: true, health: 50 * difficultyMultiplier, maxHealth: 50 * difficultyMultiplier,
-                    damage: 3 * difficultyMultiplier, expValue: 500
+                    speed: 1, color: bossType.color, isBoss: true, health: 50 * difficultyMultiplier, maxHealth: 50 * difficultyMultiplier,
+                    damage: 3 * difficultyMultiplier, expValue: 500, shootTimer: 30, shootInterval: 30,
+                    movePattern: Math.random() > 0.5 ? 2 : -2
                 });
             } else {
-                const colors = ['#ff6b6b', '#ff8c42', '#ff5252', '#e74c3c', '#c0392b'];
+                const enemyTypes = [
+                    { color: '#ff6b6b', width: 40, height: 45, speed: 2.5, shoot: false },
+                    { color: '#ff8c42', width: 45, height: 50, speed: 2, shoot: true },
+                    { color: '#ff5252', width: 35, height: 40, speed: 3, shoot: false },
+                    { color: '#e74c3c', width: 50, height: 55, speed: 1.8, shoot: true },
+                    { color: '#c0392b', width: 40, height: 45, speed: 2.2, shoot: false }
+                ];
+                const type = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
+                const eliteTypes = [
+                    { color: '#ffd700', width: 60, height: 65, speed: 1.5, shoot: true },
+                    { color: '#ffaa00', width: 55, height: 60, speed: 1.8, shoot: true },
+                    { color: '#ff8800', width: 65, height: 70, speed: 1.2, shoot: true }
+                ];
+                const eliteType = eliteTypes[Math.floor(Math.random() * eliteTypes.length)];
+                
+                const enemyData = isElite ? eliteType : type;
                 enemies.push({
-                    x: Math.random() * (canvas.width - 50), y: -50,
-                    width: isElite ? 50 : 40, height: isElite ? 55 : 45,
-                    speed: (isElite ? 1.5 : Math.random() * 2 + 2.5) * difficultyMultiplier,
-                    color: colors[Math.floor(Math.random() * colors.length)],
-                    isElite: isElite, health: (isElite ? 3 : 1) * difficultyMultiplier, maxHealth: (isElite ? 3 : 1) * difficultyMultiplier,
-                    damage: 1 * difficultyMultiplier, expValue: isElite ? 30 : 10
+                    x: Math.random() * (canvas.width - enemyData.width), y: -50,
+                    width: enemyData.width, height: enemyData.height,
+                    speed: enemyData.speed * difficultyMultiplier,
+                    color: enemyData.color,
+                    isElite: isElite,
+                    health: (isElite ? 3 : 1) * difficultyMultiplier * 2,
+                    maxHealth: (isElite ? 3 : 1) * difficultyMultiplier * 2,
+                    damage: (isElite ? 2 : 1) * difficultyMultiplier,
+                    expValue: isElite ? 30 : 10,
+                    shootTimer: enemyData.shoot ? 60 : undefined,
+                    shootInterval: enemyData.shoot ? 60 : undefined,
+                    movePattern: Math.random() > 0.5 ? 1 : -1
                 });
             }
         }
@@ -434,14 +479,34 @@
             const moveSpeed = player.speed * speedBoost;
             if (keys['ArrowLeft'] && player.x > 0) player.x -= moveSpeed;
             if (keys['ArrowRight'] && player.x < canvas.width - player.width) player.x += moveSpeed;
+            if (keys['ArrowUp'] && player.y > 0) player.y -= moveSpeed;
+            if (keys['ArrowDown'] && player.y < canvas.height - player.height) player.y += moveSpeed;
 
             bullets = bullets.filter(bullet => {
                 bullet.y += -12; bullet.x += bullet.vx || 0;
                 return bullet.y > -20 && bullet.x > -20 && bullet.x < canvas.width + 20;
             });
 
+            // 更新敌方子弹
+            enemyBullets = enemyBullets.filter(bullet => {
+                bullet.y += bullet.vy || 5;
+                bullet.x += bullet.vx || 0;
+                return bullet.y < canvas.height + 20 && bullet.x > -20 && bullet.x < canvas.width + 20;
+            });
+
             enemies = enemies.filter(enemy => {
                 enemy.y += enemy.speed;
+                enemy.x += enemy.movePattern || 0;
+                
+                // 敌人射击
+                if (enemy.shootTimer !== undefined) {
+                    enemy.shootTimer--;
+                    if (enemy.shootTimer <= 0) {
+                        enemyShoot(enemy);
+                        enemy.shootTimer = enemy.shootInterval || 60;
+                    }
+                }
+                
                 return enemy.y < canvas.height + 50;
             });
 
@@ -469,10 +534,23 @@
             enemies = enemies.filter(enemy => {
                 if (enemy.x < player.x + player.width && enemy.x + enemy.width > player.x &&
                     enemy.y < player.y + player.height && enemy.y + enemy.height > player.y) {
-                    const damage = Math.max(1, Math.ceil(enemy.damage - player.defense * 0.5));
-                    player.lives -= damage;
+                    const damage = Math.max(1, Math.ceil(enemy.damage * (1 - player.defense * 0.05)));
+                    player.hp -= damage;
                     createExplosion(player.x + player.width / 2, player.y + player.height / 2, '#4a90d9', 25);
-                    if (player.lives <= 0) gameOver();
+                    if (player.hp <= 0) gameOver();
+                    return false;
+                }
+                return true;
+            });
+
+            // 碰撞检测：敌方子弹击中玩家
+            enemyBullets = enemyBullets.filter(bullet => {
+                if (bullet.x < player.x + player.width && bullet.x + bullet.width > player.x &&
+                    bullet.y < player.y + player.height && bullet.y + bullet.height > player.y) {
+                    const damage = Math.max(1, Math.ceil(bullet.damage * (1 - player.defense * 0.05)));
+                    player.hp -= damage;
+                    createSparks(bullet.x, bullet.y, '#ff6b6b');
+                    if (player.hp <= 0) gameOver();
                     return false;
                 }
                 return true;
@@ -490,6 +568,8 @@
                 player.exp -= player.expNeeded;
                 player.level++;
                 player.expNeeded = Math.floor(player.expNeeded * 1.5);
+                player.maxHp += 5;
+                player.hp = Math.min(player.hp + 5, player.maxHp);
                 showUpgradePanel();
             }
         }
@@ -563,7 +643,8 @@
             document.getElementById('wave').textContent = wave;
             document.getElementById('currentWave').textContent = wave;
             document.getElementById('score').textContent = score;
-            document.getElementById('lives').textContent = player.lives;
+            document.getElementById('hp').textContent = player.hp;
+            document.getElementById('maxHp').textContent = player.maxHp;
             document.getElementById('level').textContent = player.level;
             document.getElementById('exp').textContent = player.exp;
             document.getElementById('expNeeded').textContent = player.expNeeded;
@@ -588,7 +669,19 @@
             drawParticles();
             drawEnemies();
             drawBullets();
+            drawEnemyBullets();
             drawPlayer();
+        }
+
+        function drawEnemyBullets() {
+            enemyBullets.forEach(bullet => {
+                ctx.save();
+                ctx.shadowColor = bullet.color;
+                ctx.shadowBlur = 10;
+                ctx.fillStyle = bullet.color;
+                ctx.fillRect(bullet.x - 2, bullet.y, 4, bullet.height);
+                ctx.restore();
+            });
         }
 
         function gameOver() {
@@ -604,12 +697,12 @@
             score = 0; wave = 1; enemiesThisWave = 10; enemiesKilledThisWave = 0;
             isBossWave = false; bossSpawned = false;
             player.x = canvas.width / 2 - 25;
-            player.speed = 1; player.damage = 1; player.attackSpeed = 1; player.defense = 1;
+            player.speed = 3; player.damage = 1; player.attackSpeed = 1; player.defense = 1;
             player.level = 1; player.exp = 0; player.expNeeded = 100;
-            player.lives = 3; player.maxLives = 3; player.ultCharge = 0; player.ultReady = false;
+            player.hp = 30; player.maxHp = 30; player.ultCharge = 0; player.ultReady = false;
             player.multiShot = 0; player.piercing = false; player.splitShot = false;
             affixes.length = 0; for (let k in affixLevels) delete affixLevels[k];
-            bullets = []; enemies = []; particles = [];
+            bullets = []; enemies = []; particles = []; enemyBullets = [];
             updateAffixList();
             document.getElementById('gameOver').style.display = 'none';
             gameRunning = true; paused = false;
