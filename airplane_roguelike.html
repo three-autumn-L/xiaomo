@@ -48,11 +48,26 @@
             text-shadow: 0 0 5px rgba(255,255,255,0.5);
             display: flex;
             gap: 20px;
+            align-items: center;
         }
 
         .game-info span {
             color: #ffd700;
             font-weight: bold;
+        }
+
+        .exp-bar-container {
+            width: 100px;
+            height: 8px;
+            background: #333;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .exp-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4a90d9, #87ceeb);
+            transition: width 0.3s;
         }
 
         #gameCanvas {
@@ -282,6 +297,9 @@
                 <div>生命: <span id="lives">3</span></div>
                 <div>等级: <span id="level">1</span></div>
                 <div>经验: <span id="exp">0</span>/<span id="expNeeded">100</span></div>
+                <div class="exp-bar-container">
+                    <div class="exp-bar-fill" id="expBar" style="width: 0%"></div>
+                </div>
             </div>
             <canvas id="gameCanvas" width="450" height="650"></canvas>
             <div class="controls">
@@ -326,6 +344,22 @@
                 <div class="stat-item">
                     <span class="stat-name">剩余敌人</span>
                     <span class="stat-value" id="enemiesLeft">0</span>
+                </div>
+            </div>
+
+            <h2>📈 升级经验</h2>
+            <div class="stats-section">
+                <div class="stat-item">
+                    <span class="stat-name">当前经验</span>
+                    <span class="stat-value" id="sidebarExp">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-name">所需经验</span>
+                    <span class="stat-value" id="sidebarExpNeeded">100</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-name">升级公式</span>
+                    <span class="stat-value" style="font-size: 10px;">×1.5</span>
                 </div>
             </div>
         </div>
@@ -775,6 +809,14 @@
             document.getElementById('exp').textContent = player.exp;
             document.getElementById('expNeeded').textContent = player.expNeeded;
             document.getElementById('enemiesLeft').textContent = enemiesThisWave - enemiesKilledThisWave;
+
+            // 更新经验条
+            const expPercent = (player.exp / player.expNeeded) * 100;
+            document.getElementById('expBar').style.width = expPercent + '%';
+
+            // 更新侧边栏经验信息
+            document.getElementById('sidebarExp').textContent = player.exp;
+            document.getElementById('sidebarExpNeeded').textContent = player.expNeeded;
 
             document.getElementById('stat-speed').textContent = player.speed.toFixed(1);
             document.getElementById('stat-damage').textContent = player.damage.toFixed(1);
