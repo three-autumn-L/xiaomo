@@ -769,7 +769,8 @@
 
         function activatePowerup(type) {
             if (type === 'heal') {
-                player.hp = Math.min(player.hp + 5, player.maxHp);
+                const healAmount = Math.floor(player.maxHp * 0.2);
+                player.hp = Math.min(player.hp + healAmount, player.maxHp);
             }
         }
 
