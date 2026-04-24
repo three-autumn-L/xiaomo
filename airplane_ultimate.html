@@ -190,7 +190,7 @@
             <div class="game-info">
                 <div>关卡: <span id="wave">1</span></div>
                 <div>分数: <span id="score">0</span></div>
-                <div>血量:</div>
+                <div>血量: <span id="hpText">10</span>/<span id="maxHpText">10</span></div>
                 <div class="hp-bar-container"><div class="hp-bar-fill" id="hpBar" style="width: 100%"></div></div>
                 <div>等级: <span id="level">1</span></div>
                 <div>经验: <span id="exp">0</span>/<span id="expNeeded">100</span></div>
@@ -705,7 +705,7 @@
                 const enemy = enemies[i];
                 if (!player.invincible && enemy.x < player.x + player.width && enemy.x + enemy.width > player.x &&
                     enemy.y < player.y + player.height && enemy.y + enemy.height > player.y) {
-                    const damage = Math.max(1, Math.ceil(enemy.damage * (1 - player.defense * 0.05)));
+                    const damage = Math.max(1, Math.ceil(enemy.damage * Math.max(0.1, 1 - player.defense * 0.08)));
                     player.hp -= damage;
                     player.invincible = true;
                     player.invincibleTimer = 60;
@@ -721,7 +721,7 @@
                 const bullet = enemyBullets[i];
                 if (!player.invincible && bullet.x < player.x + player.width && bullet.x + bullet.width > player.x &&
                     bullet.y < player.y + player.height && bullet.y + bullet.height > player.y) {
-                    const damage = Math.max(1, Math.ceil(bullet.damage * (1 - player.defense * 0.05)));
+                    const damage = Math.max(1, Math.ceil(bullet.damage * Math.max(0.1, 1 - player.defense * 0.08)));
                     player.hp -= damage;
                     player.invincible = true;
                     player.invincibleTimer = 60;
@@ -854,6 +854,8 @@
             // 更新血量条
             const hpPercent = (player.hp / player.maxHp) * 100;
             document.getElementById('hpBar').style.width = hpPercent + '%';
+            document.getElementById('hpText').textContent = player.hp;
+            document.getElementById('maxHpText').textContent = player.maxHp;
 
             // 更新经验条
             const expPercent = (player.exp / player.expNeeded) * 100;
