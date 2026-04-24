@@ -34,13 +34,14 @@
             align-items: center;
         }
         .game-info span { color: #ffd700; font-weight: bold; }
-        .exp-bar-container, .ult-bar-container {
+        .hp-bar-container, .exp-bar-container, .ult-bar-container {
             width: 100px;
             height: 8px;
             background: #333;
             border-radius: 4px;
             overflow: hidden;
         }
+        .hp-bar-fill { height: 100%; background: linear-gradient(90deg, #ff4444, #ff6b6b); }
         .exp-bar-fill { height: 100%; background: linear-gradient(90deg, #4a90d9, #87ceeb); }
         .ult-bar-fill { height: 100%; background: linear-gradient(90deg, #ff6b6b, #ffd700); }
         #gameCanvas {
@@ -189,11 +190,12 @@
             <div class="game-info">
                 <div>关卡: <span id="wave">1</span></div>
                 <div>分数: <span id="score">0</span></div>
-                <div>血量: <span id="hp">30</span>/<span id="maxHp">30</span></div>
+                <div>血量:</div>
+                <div class="hp-bar-container"><div class="hp-bar-fill" id="hpBar" style="width: 100%"></div></div>
                 <div>等级: <span id="level">1</span></div>
                 <div>经验: <span id="exp">0</span>/<span id="expNeeded">100</span></div>
                 <div class="exp-bar-container"><div class="exp-bar-fill" id="expBar" style="width: 0%"></div></div>
-                <div>大招: <span id="ultCharge">0</span>%</div>
+                <div>大招:</div>
                 <div class="ult-bar-container"><div class="ult-bar-fill" id="ultBar" style="width: 0%"></div></div>
             </div>
             <canvas id="gameCanvas" width="450" height="650"></canvas>
@@ -283,8 +285,21 @@
             { name: '分裂', desc: '子弹分裂成3发', rarity: 'legendary', effect: (p) => p.splitShot = true },
         ];
 
-        let bullets = [], enemies = [], particles = [], stars = [], enemyBullets = [];
+        let bullets = [], enemies = [], particles = [], stars = [], enemyBullets = [], dropItems = [];
         const keys = {};
+
+        // 掉落道具类型
+        const dropTypes = [
+            { type: 'rapidFire', color: '#ff6b6b', symbol: '⚡', name: '射速' },
+            { type: 'autoFire', color: '#4a90d9', symbol: '🎯', name: '自动' },
+            { type: 'splitShot', color: '#9b59b6', symbol: '✦', name: '分裂' },
+            { type: 'shield', color: '#2ecc71', symbol: '🛡️', name: '护盾' },
+            { type: 'spreadShot', color: '#f1c40f', symbol: '💥', name: '范围' },
+            { type: 'piercing', color: '#00d4ff', symbol: '💎', name: '穿透' },
+            { type: 'homing', color: '#ff69b4', symbol: '💗', name: '追踪' },
+            { type: 'invincible', color: '#00ff88', symbol: '✨', name: '无敌' },
+            { type: 'heal', color: '#ff4444', symbol: '❤️', name: '回血' }
+        ];
 
         for (let i = 0; i < 100; i++) {
             stars.push({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, size: Math.random() * 2 + 1, speed: Math.random() * 2 + 0.5, brightness: Math.random() });
@@ -333,6 +348,25 @@
             bullets.forEach(bullet => {
                 ctx.save(); ctx.shadowColor = bullet.color; ctx.shadowBlur = 10;
                 ctx.fillStyle = bullet.color; ctx.fillRect(bullet.x - 2, bullet.y, 4, bullet.height);
+                ctx.restore();
+            });
+        }
+
+        function drawDropItems() {
+            dropItems.forEach(item => {
+                ctx.save();
+                ctx.shadowColor = item.color; ctx.shadowBlur = 15;
+                ctx.fillStyle = item.color;
+                ctx.globalAlpha = 0.8;
+                ctx.beginPath();
+                ctx.arc(item.x + item.size / 2, item.y + item.size / 2, item.size / 2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+                ctx.fillStyle = '#fff';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(item.symbol, item.x + item.size / 2, item.y + item.size / 2);
                 ctx.restore();
             });
         }
@@ -409,6 +443,20 @@
                     vx: offset * 0.1,
                     vy: enemy.isBoss ? 4 : enemy.isElite ? 5 : 6,
                     damage: enemy.damage
+                });
+            }
+        }
+
+        function spawnDropItem(x, y) {
+            if (Math.random() < 0.15) {
+                const typeData = dropTypes[Math.floor(Math.random() * dropTypes.length)];
+                dropItems.push({
+                    x: x, y: y,
+                    size: 30,
+                    color: typeData.color,
+                    symbol: typeData.symbol,
+                    type: typeData.type,
+                    speed: 2
                 });
             }
         }
@@ -540,6 +588,7 @@
                             player.ultCharge = Math.min(player.ultMax, player.ultCharge + (enemy.isBoss ? 50 : enemy.isElite ? 10 : 5));
                             gainExp(enemy.expValue);
                             enemiesKilledThisWave++;
+                            spawnDropItem(enemy.x + enemy.width / 2 - 15, enemy.y + enemy.height / 2 - 15);
                             enemies.splice(i, 1);
                         }
                         break;
@@ -581,6 +630,22 @@
                 }
             }
 
+            // 更新掉落道具
+            dropItems = dropItems.filter(item => {
+                item.y += item.speed;
+                return item.y < canvas.height + 50;
+            });
+
+            // 玩家吃到道具
+            dropItems = dropItems.filter(item => {
+                if (item.x < player.x + player.width && item.x + item.size > player.x &&
+                    item.y < player.y + player.height && item.y + item.size > player.y) {
+                    activatePowerup(item.type);
+                    return false;
+                }
+                return true;
+            });
+
             if (enemiesKilledThisWave >= enemiesThisWave) nextWave();
 
             updateParticles();
@@ -596,6 +661,20 @@
                 player.maxHp += 5;
                 player.hp = Math.min(player.hp + 5, player.maxHp);
                 showUpgradePanel();
+            }
+        }
+
+        function activatePowerup(type) {
+            switch(type) {
+                case 'rapidFire': player.attackSpeed += 0.3; break;
+                case 'autoFire': player.autoFire = true; break;
+                case 'splitShot': player.splitShot = true; break;
+                case 'shield': player.defense += 0.5; break;
+                case 'spreadShot': player.spreadShot = true; break;
+                case 'piercing': player.piercing = true; break;
+                case 'homing': player.homing = true; break;
+                case 'invincible': player.invincible = true; player.invincibleTimer = 180; break;
+                case 'heal': player.hp = Math.min(player.hp + 5, player.maxHp); break;
             }
         }
 
@@ -648,6 +727,8 @@
             updateAffixList();
             document.getElementById('upgradePanel').style.display = 'none';
             paused = false;
+            player.invincible = true;
+            player.invincibleTimer = 60;
         }
 
         function updateAffixList() {
@@ -668,20 +749,23 @@
             document.getElementById('wave').textContent = wave;
             document.getElementById('currentWave').textContent = wave;
             document.getElementById('score').textContent = score;
-            document.getElementById('hp').textContent = player.hp;
-            document.getElementById('maxHp').textContent = player.maxHp;
             document.getElementById('level').textContent = player.level;
             document.getElementById('exp').textContent = player.exp;
             document.getElementById('expNeeded').textContent = player.expNeeded;
             document.getElementById('enemiesLeft').textContent = enemiesThisWave - enemiesKilledThisWave;
             document.getElementById('bossWave').textContent = Math.ceil(wave / 5) * 5;
 
+            // 更新血量条
+            const hpPercent = (player.hp / player.maxHp) * 100;
+            document.getElementById('hpBar').style.width = hpPercent + '%';
+
+            // 更新经验条
             const expPercent = (player.exp / player.expNeeded) * 100;
             document.getElementById('expBar').style.width = expPercent + '%';
 
+            // 更新大招条
             const ultPercent = (player.ultCharge / player.ultMax) * 100;
             document.getElementById('ultBar').style.width = ultPercent + '%';
-            document.getElementById('ultCharge').textContent = Math.floor(ultPercent);
 
             document.getElementById('stat-speed').textContent = player.speed.toFixed(1);
             document.getElementById('stat-damage').textContent = player.damage.toFixed(1);
@@ -692,6 +776,7 @@
         function draw() {
             drawBackground();
             drawParticles();
+            drawDropItems();
             drawEnemies();
             drawBullets();
             drawEnemyBullets();
@@ -728,7 +813,7 @@
             player.invincible = false; player.invincibleTimer = 0;
             player.multiShot = 0; player.piercing = false; player.splitShot = false;
             affixes.length = 0; for (let k in affixLevels) delete affixLevels[k];
-            bullets = []; enemies = []; particles = []; enemyBullets = [];
+            bullets = []; enemies = []; particles = []; enemyBullets = []; dropItems = [];
             updateAffixList();
             document.getElementById('gameOver').style.display = 'none';
             gameRunning = true; paused = false;
