@@ -253,7 +253,8 @@
             x: canvas.width / 2 - 25, y: canvas.height - 90, width: 50, height: 60,
             speed: 3, damage: 1, attackSpeed: 1, defense: 1,
             level: 1, exp: 0, expNeeded: 100, hp: 30, maxHp: 30,
-            ultCharge: 0, ultMax: 100, ultReady: false
+            ultCharge: 0, ultMax: 100, ultReady: false,
+            invincible: false, invincibleTimer: 0
         };
 
         const affixes = [];
@@ -303,6 +304,9 @@
 
         function drawPlayer() {
             ctx.save();
+            if (player.invincible) {
+                ctx.globalAlpha = 0.5 + Math.sin(Date.now() / 50) * 0.5;
+            }
             ctx.shadowColor = '#87ceeb'; ctx.shadowBlur = 20;
             const gradient = ctx.createLinearGradient(player.x, player.y, player.x, player.y + player.height);
             gradient.addColorStop(0, '#6ab0ff'); gradient.addColorStop(0.5, '#4a90d9'); gradient.addColorStop(1, '#2a5a9a');
@@ -494,6 +498,14 @@
                 return bullet.y < canvas.height + 20 && bullet.x > -20 && bullet.x < canvas.width + 20;
             });
 
+            // 更新无敌时间
+            if (player.invincible) {
+                player.invincibleTimer--;
+                if (player.invincibleTimer <= 0) {
+                    player.invincible = false;
+                }
+            }
+
             enemies = enemies.filter(enemy => {
                 enemy.y += enemy.speed;
                 enemy.x += enemy.movePattern || 0;
@@ -532,10 +544,12 @@
             });
 
             enemies = enemies.filter(enemy => {
-                if (enemy.x < player.x + player.width && enemy.x + enemy.width > player.x &&
+                if (!player.invincible && enemy.x < player.x + player.width && enemy.x + enemy.width > player.x &&
                     enemy.y < player.y + player.height && enemy.y + enemy.height > player.y) {
                     const damage = Math.max(1, Math.ceil(enemy.damage * (1 - player.defense * 0.05)));
                     player.hp -= damage;
+                    player.invincible = true;
+                    player.invincibleTimer = 60;
                     createExplosion(player.x + player.width / 2, player.y + player.height / 2, '#4a90d9', 25);
                     if (player.hp <= 0) gameOver();
                     return false;
@@ -545,10 +559,12 @@
 
             // 碰撞检测：敌方子弹击中玩家
             enemyBullets = enemyBullets.filter(bullet => {
-                if (bullet.x < player.x + player.width && bullet.x + bullet.width > player.x &&
+                if (!player.invincible && bullet.x < player.x + player.width && bullet.x + bullet.width > player.x &&
                     bullet.y < player.y + player.height && bullet.y + bullet.height > player.y) {
                     const damage = Math.max(1, Math.ceil(bullet.damage * (1 - player.defense * 0.05)));
                     player.hp -= damage;
+                    player.invincible = true;
+                    player.invincibleTimer = 60;
                     createSparks(bullet.x, bullet.y, '#ff6b6b');
                     if (player.hp <= 0) gameOver();
                     return false;
@@ -700,6 +716,7 @@
             player.speed = 3; player.damage = 1; player.attackSpeed = 1; player.defense = 1;
             player.level = 1; player.exp = 0; player.expNeeded = 100;
             player.hp = 30; player.maxHp = 30; player.ultCharge = 0; player.ultReady = false;
+            player.invincible = false; player.invincibleTimer = 0;
             player.multiShot = 0; player.piercing = false; player.splitShot = false;
             affixes.length = 0; for (let k in affixLevels) delete affixLevels[k];
             bullets = []; enemies = []; particles = []; enemyBullets = [];
