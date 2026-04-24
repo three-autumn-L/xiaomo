@@ -306,8 +306,11 @@
             ctx.save();
             if (player.invincible) {
                 ctx.globalAlpha = 0.5 + Math.sin(Date.now() / 50) * 0.5;
+                ctx.shadowColor = '#ff6b6b';
+                ctx.shadowBlur = 30;
+            } else {
+                ctx.shadowColor = '#87ceeb'; ctx.shadowBlur = 20;
             }
-            ctx.shadowColor = '#87ceeb'; ctx.shadowBlur = 20;
             const gradient = ctx.createLinearGradient(player.x, player.y, player.x, player.y + player.height);
             gradient.addColorStop(0, '#6ab0ff'); gradient.addColorStop(0.5, '#4a90d9'); gradient.addColorStop(1, '#2a5a9a');
             ctx.fillStyle = gradient;
@@ -545,34 +548,38 @@
                 return !hit || bullet.piercing;
             });
 
-            enemies = enemies.filter(enemy => {
+            // 敌机撞到玩家检测
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const enemy = enemies[i];
                 if (!player.invincible && enemy.x < player.x + player.width && enemy.x + enemy.width > player.x &&
                     enemy.y < player.y + player.height && enemy.y + enemy.height > player.y) {
                     const damage = Math.max(1, Math.ceil(enemy.damage * (1 - player.defense * 0.05)));
                     player.hp -= damage;
                     player.invincible = true;
                     player.invincibleTimer = 60;
-                    createExplosion(player.x + player.width / 2, player.y + player.height / 2, '#4a90d9', 25);
-                    if (player.hp <= 0) gameOver();
-                    return false;
+                    if (player.hp <= 0) {
+                        gameOver();
+                        break;
+                    }
                 }
-                return true;
-            });
+            }
 
-            // 碰撞检测：敌方子弹击中玩家
-            enemyBullets = enemyBullets.filter(bullet => {
+            // 敌方子弹击中玩家检测
+            for (let i = enemyBullets.length - 1; i >= 0; i--) {
+                const bullet = enemyBullets[i];
                 if (!player.invincible && bullet.x < player.x + player.width && bullet.x + bullet.width > player.x &&
                     bullet.y < player.y + player.height && bullet.y + bullet.height > player.y) {
                     const damage = Math.max(1, Math.ceil(bullet.damage * (1 - player.defense * 0.05)));
                     player.hp -= damage;
                     player.invincible = true;
                     player.invincibleTimer = 60;
-                    createSparks(bullet.x, bullet.y, '#ff6b6b');
-                    if (player.hp <= 0) gameOver();
-                    return false;
+                    enemyBullets.splice(i, 1);
+                    if (player.hp <= 0) {
+                        gameOver();
+                        break;
+                    }
                 }
-                return true;
-            });
+            }
 
             if (enemiesKilledThisWave >= enemiesThisWave) nextWave();
 
