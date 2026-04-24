@@ -522,9 +522,11 @@
                 return enemy.y < canvas.height + 50;
             });
 
+            // 子弹击中敌机检测
             bullets = bullets.filter(bullet => {
                 let hit = false;
-                enemies = enemies.filter(enemy => {
+                for (let i = 0; i < enemies.length; i++) {
+                    const enemy = enemies[i];
                     if (bullet.x < enemy.x + enemy.width && bullet.x + bullet.width > enemy.x &&
                         bullet.y < enemy.y + enemy.height && bullet.y + bullet.height > enemy.y) {
                         hit = true;
@@ -535,11 +537,11 @@
                             player.ultCharge = Math.min(player.ultMax, player.ultCharge + (enemy.isBoss ? 50 : enemy.isElite ? 10 : 5));
                             gainExp(enemy.expValue);
                             enemiesKilledThisWave++;
-                            return false;
+                            enemies.splice(i, 1);
                         }
+                        break;
                     }
-                    return true;
-                });
+                }
                 return !hit || bullet.piercing;
             });
 
