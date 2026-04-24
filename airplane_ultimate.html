@@ -324,23 +324,94 @@
                 ctx.shadowColor = '#ff6b6b';
                 ctx.shadowBlur = 30;
             } else {
-                ctx.shadowColor = '#87ceeb'; ctx.shadowBlur = 20;
+                ctx.shadowColor = '#00d4ff'; ctx.shadowBlur = 25;
             }
+            
+            // 机翼 - 科幻风格
+            ctx.fillStyle = '#1a3a5a';
+            ctx.beginPath();
+            ctx.moveTo(player.x + player.width / 2, player.y + 20);
+            ctx.lineTo(player.x - 15, player.y + 45);
+            ctx.lineTo(player.x + player.width / 2, player.y + 35);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#00d4ff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(player.x + player.width / 2, player.y + 20);
+            ctx.lineTo(player.x + player.width + 15, player.y + 45);
+            ctx.lineTo(player.x + player.width / 2, player.y + 35);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            
+            // 机身主体 - 科幻风格
             const gradient = ctx.createLinearGradient(player.x, player.y, player.x, player.y + player.height);
-            gradient.addColorStop(0, '#6ab0ff'); gradient.addColorStop(0.5, '#4a90d9'); gradient.addColorStop(1, '#2a5a9a');
+            gradient.addColorStop(0, '#2a5a8a');
+            gradient.addColorStop(0.3, '#1a4a7a');
+            gradient.addColorStop(0.7, '#0a3a6a');
+            gradient.addColorStop(1, '#0a2a4a');
             ctx.fillStyle = gradient;
+            
             ctx.beginPath();
             ctx.moveTo(player.x + player.width / 2, player.y);
-            ctx.lineTo(player.x, player.y + player.height * 0.7);
-            ctx.lineTo(player.x + player.width * 0.3, player.y + player.height * 0.6);
+            ctx.lineTo(player.x + player.width * 0.2, player.y + player.height * 0.5);
+            ctx.lineTo(player.x + player.width * 0.15, player.y + player.height * 0.7);
             ctx.lineTo(player.x + player.width * 0.3, player.y + player.height);
+            ctx.lineTo(player.x + player.width * 0.5, player.y + player.height * 0.85);
             ctx.lineTo(player.x + player.width * 0.7, player.y + player.height);
-            ctx.lineTo(player.x + player.width * 0.7, player.y + player.height * 0.6);
-            ctx.lineTo(player.x + player.width, player.y + player.height * 0.7);
-            ctx.closePath(); ctx.fill();
-            ctx.fillStyle = '#357abd';
-            ctx.fillRect(player.x - 8, player.y + 25, 12, 30);
-            ctx.fillRect(player.x + player.width - 4, player.y + 25, 12, 30);
+            ctx.lineTo(player.x + player.width * 0.85, player.y + player.height * 0.7);
+            ctx.lineTo(player.x + player.width * 0.8, player.y + player.height * 0.5);
+            ctx.lineTo(player.x + player.width / 2, player.y);
+            ctx.closePath();
+            ctx.fill();
+            
+            // 机身边框
+            ctx.strokeStyle = '#00d4ff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // 驾驶舱 - 发光效果
+            const cockpitGradient = ctx.createRadialGradient(
+                player.x + player.width / 2, player.y + 20, 0,
+                player.x + player.width / 2, player.y + 20, 15
+            );
+            cockpitGradient.addColorStop(0, '#00ffff');
+            cockpitGradient.addColorStop(0.5, '#0088aa');
+            cockpitGradient.addColorStop(1, '#004466');
+            ctx.fillStyle = cockpitGradient;
+            ctx.beginPath();
+            ctx.arc(player.x + player.width / 2, player.y + 20, 12, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#00ffff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // 引擎火焰 - 科幻风格
+            const flameLength = 15 + Math.random() * 10;
+            const flameGradient = ctx.createLinearGradient(
+                player.x + player.width / 2, player.y + player.height,
+                player.x + player.width / 2, player.y + player.height + flameLength
+            );
+            flameGradient.addColorStop(0, '#00ffff');
+            flameGradient.addColorStop(0.3, '#0088ff');
+            flameGradient.addColorStop(0.6, '#0044ff');
+            flameGradient.addColorStop(1, 'rgba(0, 100, 255, 0)');
+            ctx.fillStyle = flameGradient;
+            ctx.beginPath();
+            ctx.moveTo(player.x + player.width * 0.35, player.y + player.height);
+            ctx.lineTo(player.x + player.width / 2, player.y + player.height + flameLength);
+            ctx.lineTo(player.x + player.width * 0.65, player.y + player.height);
+            ctx.closePath();
+            ctx.fill();
+            
+            // 机尾推进器
+            ctx.fillStyle = '#00d4ff';
+            ctx.fillRect(player.x + player.width * 0.35, player.y + player.height - 5, 5, 8);
+            ctx.fillRect(player.x + player.width * 0.6, player.y + player.height - 5, 5, 8);
+            
             ctx.restore();
         }
 
@@ -373,24 +444,64 @@
 
         function drawEnemies() {
             enemies.forEach(enemy => {
-                ctx.save(); ctx.shadowColor = enemy.color; ctx.shadowBlur = 15;
+                ctx.save();
+                ctx.shadowColor = enemy.color;
+                ctx.shadowBlur = 20;
+
+                // 敌机主体 - 科幻风格
                 const gradient = ctx.createLinearGradient(enemy.x, enemy.y, enemy.x, enemy.y + enemy.height);
-                gradient.addColorStop(0, enemy.color); gradient.addColorStop(1, '#8b0000');
+                gradient.addColorStop(0, enemy.color);
+                gradient.addColorStop(0.5, enemy.color);
+                gradient.addColorStop(1, '#4a0000');
                 ctx.fillStyle = gradient;
+
+                // 外形 - 三角形科幻设计
                 ctx.beginPath();
                 ctx.moveTo(enemy.x + enemy.width / 2, enemy.y + enemy.height);
-                ctx.lineTo(enemy.x, enemy.y);
-                ctx.lineTo(enemy.x + enemy.width * 0.3, enemy.y + enemy.height * 0.3);
-                ctx.lineTo(enemy.x + enemy.width * 0.5, enemy.y + enemy.height * 0.2);
-                ctx.lineTo(enemy.x + enemy.width * 0.7, enemy.y + enemy.height * 0.3);
-                ctx.lineTo(enemy.x + enemy.width, enemy.y);
-                ctx.closePath(); ctx.fill();
+                ctx.lineTo(enemy.x, enemy.y + enemy.height * 0.3);
+                ctx.lineTo(enemy.x + enemy.width * 0.25, enemy.y + enemy.height * 0.5);
+                ctx.lineTo(enemy.x + enemy.width / 2, enemy.y + enemy.height * 0.2);
+                ctx.lineTo(enemy.x + enemy.width * 0.75, enemy.y + enemy.height * 0.5);
+                ctx.lineTo(enemy.x + enemy.width, enemy.y + enemy.height * 0.3);
+                ctx.closePath();
+                ctx.fill();
+                
+                // 边框
+                ctx.strokeStyle = enemy.color;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // 驾驶舱
+                ctx.fillStyle = '#ff4444';
+                ctx.beginPath();
+                ctx.arc(enemy.x + enemy.width / 2, enemy.y + enemy.height * 0.35, 6, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#ff8888';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                // 翅膀/推进器
+                ctx.fillStyle = '#3a0000';
+                ctx.fillRect(enemy.x - 8, enemy.y + enemy.height * 0.4, 10, 15);
+                ctx.fillRect(enemy.x + enemy.width - 2, enemy.y + enemy.height * 0.4, 10, 15);
+                ctx.strokeStyle = enemy.color;
+                ctx.strokeRect(enemy.x - 8, enemy.y + enemy.height * 0.4, 10, 15);
+                ctx.strokeRect(enemy.x + enemy.width - 2, enemy.y + enemy.height * 0.4, 10, 15);
+
                 if (enemy.isBoss) {
                     ctx.strokeStyle = '#ff0000'; ctx.lineWidth = 3;
-                    ctx.strokeRect(enemy.x - 5, enemy.y - 5, enemy.width + 10, enemy.height + 10);
+                    ctx.strokeRect(enemy.x - 8, enemy.y - 8, enemy.width + 16, enemy.height + 16);
+                    ctx.fillStyle = '#ff0000';
+                    ctx.font = 'bold 16px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('BOSS', enemy.x + enemy.width / 2, enemy.y - 15);
                 } else if (enemy.isElite) {
                     ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 2;
-                    ctx.strokeRect(enemy.x - 3, enemy.y - 3, enemy.width + 6, enemy.height + 6);
+                    ctx.strokeRect(enemy.x - 5, enemy.y - 5, enemy.width + 10, enemy.height + 10);
+                    ctx.fillStyle = '#ffd700';
+                    ctx.font = 'bold 12px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('★', enemy.x + enemy.width / 2, enemy.y - 8);
                 }
                 ctx.restore();
             });
